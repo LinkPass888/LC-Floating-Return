@@ -28,6 +28,10 @@ static PiPManager* sharedInstance = nil;
     return sharedInstance;
 }
 
++ (instancetype)sharedIfLoaded {
+    return sharedInstance;
+}
+
 - (DecoratedAppSceneViewController *)displayingDecoratedVC {
     return (id)self.displayingVC.delegate;
 }
@@ -45,10 +49,24 @@ static PiPManager* sharedInstance = nil;
 }
 
 - (instancetype)init {
-    NSError* error = nil;
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:&error];
-    [[AVAudioSession sharedInstance] setActive:YES withOptions:1 error:&error];
+    self = [super init];
     return self;
+}
+
+- (void)ensureAudioSessionForPiP {
+    NSError* error = nil;
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    [session setCategory:AVAudioSessionCategoryPlayback
+             withOptions:AVAudioSessionCategoryOptionMixWithOthers
+                   error:&error];
+    [session setActive:YES error:&error];
+}
+
+- (void)setPipController:(AVPictureInPictureController *)pipController {
+    if(pipController) {
+        [self ensureAudioSessionForPiP];
+    }
+    _pipController = pipController;
 }
 
 - (void)startPiPWithVC:(AppSceneViewController*)vc {
