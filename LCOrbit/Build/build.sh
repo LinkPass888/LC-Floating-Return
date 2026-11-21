@@ -10,40 +10,9 @@ case "$BUILD_COMMIT" in
 esac
 BUILD_COMMIT_FLAG="-DFM_BUILD_COMMIT=@\"$BUILD_COMMIT\""
 
-# Exercise production scanning, menu selection, favorite persistence and the
-# complete plugin-management flow. A failed regression stops this build.
-sh "$ROOT/LCOrbit/Tests/run-core-lifecycle-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-storage-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-storage-status-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-drawer-entry-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-json-log-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-github-access-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-update-release-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-dock-visibility-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-guest-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-jit-favorites-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-tweak-center-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-multitask-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-task-ownership-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-native-window-registry-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-native-startup-cancellation-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-automatic-pip-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-side-notch-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-floating-launch-tests.sh"
-python3 "$ROOT/LCOrbit/Tests/check-running-close-controls.py"
-sh "$ROOT/LCOrbit/Tests/run-multitask-hook-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-dock-surface-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-multitask-restore-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-multitask-parent-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-bootstrap-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-multitask-scene-tests.sh"
-python3 "$ROOT/LCOrbit/Tests/check-adaptive-dock-layout.py"
-sh "$ROOT/LCOrbit/Tests/run-multitask-viewport-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-app-compatibility-tests.sh"
-python3 "$ROOT/LCOrbit/Tests/check-guest-uikit-diagnostics.py"
-sh "$ROOT/LCOrbit/Tests/run-multitask-menu-tests.sh"
-sh "$ROOT/LCOrbit/Tests/run-host-settings-tests.sh"
-python3 "$ROOT/LCOrbit/Tests/check-host-gestures.py"
+# The checked-in FloatingMenu source is the minimal return-only edition.
+# Run tests for its retained contract and shared Orbit runtime only.
+sh "$ROOT/LCOrbit/Build/test-minimal-menu.sh"
 mkdir -p "$(dirname "$OUT")"
 xcrun clang "$BUILD_COMMIT_FLAG" -arch arm64 -isysroot "$SDK" -miphoneos-version-min=16.0 -fobjc-arc -O2 \
     -dynamiclib -framework Foundation -framework UIKit -framework QuartzCore \

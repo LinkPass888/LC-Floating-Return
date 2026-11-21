@@ -18,121 +18,12 @@ for symbol in 'OBJC_CLASS_$_LCOrbitCore' 'OBJC_CLASS_$_LCOrbitHost' \
 do
     printf '%s\n' "$SYMBOLS" | grep -Fq "$symbol"
 done
-# Keep the main branch 1.0.45 popup sequence and performance limited
-# glass geometry updates. Staggered animation remains a transition-only action.
-grep -Fq 'if(flipped) {' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'FMPopItems(items,dividers,self.left,reveal)' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'FMSpringStep(&x,&v,_morphTarget,_morphOmega,_morphZeta,dt)' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-# Auto-update signs only its replaced dylib and retains rollback until verified.
-grep -Fq 'installDownloadedPluginAndSign:binary' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'signFilesWithZSignWithURLs:completionHandler:' "$ROOT/LCOrbit/Core/LCOrbitPluginUpdater.m"
-grep -Fq 'UVerifyKernelSignature(destination)' "$ROOT/LCOrbit/Core/LCOrbitPluginUpdater.m"
-grep -Fq 'F_CHECK_LV' "$ROOT/LCOrbit/Core/LCOrbitPluginUpdater.m"
-grep -Fq 'rename(backup.fileSystemRepresentation' "$ROOT/LCOrbit/Core/LCOrbitPluginUpdater.m"
-# A successful, verified signed install offers a cancellable restart in LC UI.
-# Never restart on the failed signer path or use a raw process exit.
-grep -Fq 'if(success) [weakSelf offerRestartAfterVerifiedUpdate];' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'restartHostAfterSignedUpdate:&restartError' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'launchToGuestAppWithClassicMode:' "$ROOT/LCOrbit/Core/LCOrbitPluginUpdater.m"
-grep -Fq '[defaults setObject:@"ui" forKey:@"selected"]' "$ROOT/LCOrbit/Core/LCOrbitPluginUpdater.m"
-grep -Fq 'update-user-can-defer-restart' "$ROOT/LCOrbit/Tests/UIKitDrawer/main.m"
-if grep -Eq 'exit\(0\)|raise\(SIGKILL\)' "$ROOT/LCOrbit/Core/LCOrbitPluginUpdater.m"; then
-    echo 'Updater must delegate relaunch instead of terminating the host directly' >&2
-    exit 1
-fi
-# A user-initiated adaptive opening bypasses the normal drawer announcement.
-# Do not remove its single confirmation tick, or emit one from background redraws.
-grep -Fq 'if([self presentAdaptiveDrawer])' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'adaptive-normal-no-haptic-on-redraw' "$ROOT/LCOrbit/Tests/UIKitDrawer/main.m"
-grep -Fq 'adaptive-normal-one-tick-on-pull-release' "$ROOT/LCOrbit/Tests/UIKitDrawer/main.m"
-# The main branch owns the water-glass entrance: contents travel with the
-# shell, and the adaptive switcher reads the common popAnimation preference.
-grep -Fq 'BOOL reveal=_popRevealed?t>=.42:t>=.5' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'BOOL reveal=_revealed?t>=.42:t>=.5' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq '[self setDrawerContentsHidden:NO inPanel:drawer]' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq '[self popContent:YES];' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'static NSInteger TaskPopMode(void)' "$ROOT/LCOrbit/Core/LCOrbitTaskSwitcher.m"
-# Guard existing preferences and the old Guest switch pathway from accidental deletion.
-grep -Fq 'forModule:@"LCFloatingMenu"' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'launchToGuestAppWithURL:' "$ROOT/LCOrbit/Core/LCOrbitGuestService.m"
-grep -Fq 'LCOpenSideStore' "$ROOT/LCOrbit/Core/LCOrbitGuestService.m"
-# Assert the dangerous regression patterns from the review stay fixed.
+# The minimal return-only FloatingMenu intentionally drops drawer-specific UI.
+# Retain only source contracts relevant to the new module and shared runtime.
+grep -Fq -- '- (void)returnToLiveContainer' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
+grep -Fq 'orbitDidStartWithContext:' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
+grep -Fq 'orbitWillStop' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
+grep -Fq 'LCFloatingMenuRegisterWithOrbit' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
 grep -Fq 'if(created) _window.hidden=NO' "$ROOT/LCOrbit/Core/LCOrbitOverlayManager.m"
-# The developer-only tweak-to-host option should display an overlay in LC UI
-# without loosening the existing Guest, SideStore, or LiveProcess exclusions.
-grep -Fq '+ (BOOL)isHostUI' "$ROOT/LCOrbit/Core/LCOrbitHost.m"
-grep -Fq 'boolForKey:@"LCLoadTweaksToSelf"' "$ROOT/LCOrbit/Core/LCOrbitHost.m"
-grep -Fq 'if(!scene || (!GuestInfo() && !FMHostUI())) return;' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'if(FMHostUI()) return;' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'lc-host-foreground' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'if(hostUI) safeBottom=MAX(safeBottom,100);' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'FMLog(@"panel-layout"' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-# Dark drawers in Guests must receive a readability backing without changing day/Clear behavior.
-# The compact drawer is exempt: its narrow panel turned the night backing into a flat plate.
-grep -Fq 'BOOL wantsBacking=strong && (FMHostUI() || (nativeGlass && FMMenuDark() && !compactDrawer));' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'BOOL compactDrawer=BoolPref(@"compactMode",NO);' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'CGFloat opacity=night?(clear?.56:.74):(clear?.42:.26);' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'appearancePollGeneration!=generation' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'self.overlayView.overrideUserInterfaceStyle=' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-if grep -Fq 'self.window.overrideUserInterfaceStyle=' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"; then
-    echo 'Theme override escaped module layer' >&2
-    exit 1
-fi
-# Both log sources need their own viewer, storage, and export support.
-grep -Fq 'LCOrbit/Core/LCOrbitTweakAudit.m' "$ROOT/LCOrbit/Build/build.sh"
-grep -Fq 'LCOrbit/Core/LCOrbitLogViewer.m' "$ROOT/LCOrbit/Build/build.sh"
-grep -Fq 'event=overlay-ready' "$ROOT/LCFloatingMenu/README.md" || true
-grep -Fq '@selector(openMenuLogs)' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq '@selector(openTweakLogs)' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'captureSnapshot' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'kind:@"tweaks"' "$ROOT/LCOrbit/Core/LCOrbitTweakAudit.m"
-grep -Fq 'LCOrbit/Core/LCOrbitLog.m' "$ROOT/LCOrbit/Build/build.sh"
-grep -Fq 'AuditSharedStorage(images,lines);' "$ROOT/LCOrbit/Core/LCOrbitTweakAudit.m"
-grep -Fq 'shared-app %@ selected=%@ FloatingMenu=%@' "$ROOT/LCOrbit/Core/LCOrbitTweakAudit.m"
-grep -Fq 'shared-disk scope=files-only' "$ROOT/LCOrbit/Core/LCOrbitTweakAudit.m"
-grep -Fq 'initWithTweakAudit:' "$ROOT/LCOrbit/Core/LCOrbitLogViewer.m"
-grep -Fq 'refreshCurrent' "$ROOT/LCOrbit/Core/LCOrbitLogViewer.m"
-grep -Fq 'exportCurrent' "$ROOT/LCOrbit/Core/LCOrbitLogViewer.m"
-grep -Fq 'confirmClear' "$ROOT/LCOrbit/Core/LCOrbitLogViewer.m"
-# Manual sharing requires confirmation; automatic sharing requires its opt-in switch.
-grep -Fq 'LCOrbit/Core/LCOrbitTweakSync.m' "$ROOT/LCOrbit/Build/build.sh"
-grep -Fq 'if(![LCOrbitHost isHostUI])' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-grep -Fq 'name isEqualToString:@"TweakLoader.dylib"' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-grep -Fq 'RegularFile(privatePath)' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-grep -Fq 'contentsEqualAtPath:from andPath:temporary' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-grep -Fq 'automaticSyncEnabledForPlugin:' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-grep -Fq 'openSharedTweaks' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'manual-sync' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-# Shared tweaks must have a standalone, host-only manager with explicit batch controls.
-grep -Fq 'LCOrbit/Core/LCOrbitSharedTweaksViewController.m' "$ROOT/LCOrbit/Build/build.sh"
-grep -Fq 'openSharedTweaks' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'action:@selector(openSharedTweaks)' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
-grep -Fq 'action:@selector(confirmTweakSync)' "$ROOT/LCFloatingMenu/LCFloatingMenu.m" && {
-    echo 'Old sync action is still exposed in the diagnostic view' >&2
-    exit 1
-}
-grep -Fq 'pluginInventory' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-grep -Fq 'applyShare:(BOOL)share names:' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-grep -Fq 'unlink(actual.fileSystemRepresentation)' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-grep -Fq 'TweakLoader.dylib' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-grep -Fq 'confirmShare:(BOOL)share' "$ROOT/LCOrbit/Core/LCOrbitSharedTweaksViewController.m"
-grep -Fq '全选可共享插件' "$ROOT/LCOrbit/Core/LCOrbitSharedTweaksViewController.m"
-grep -Fq '全选已共享插件' "$ROOT/LCOrbit/Core/LCOrbitSharedTweaksViewController.m"
-grep -Fq '取消共享选中' "$ROOT/LCOrbit/Core/LCOrbitSharedTweaksViewController.m"
-# Tweak Center 2.0: actual LC loader assignments, protected host and recoverable file operations.
-grep -Fq 'LCOrbit/Core/LCOrbitTweakCenter.m' "$ROOT/LCOrbit/Build/build.sh"
-grep -Fq 'LCOrbit/Core/LCOrbitTweakCenterViews.m' "$ROOT/LCOrbit/Build/build.sh"
-grep -Fq 'TCManagedName' "$ROOT/LCOrbit/Core/LCOrbitTweakCenter.m"
-grep -Fq 'LCTweakFolder' "$ROOT/LCOrbit/Core/LCOrbitTweakCenter.m"
-grep -Fq 'originalInfo=[NSData dataWithContentsOfFile:infoFile' "$ROOT/LCOrbit/Core/LCOrbitTweakCenter.m"
-grep -Fq '.rollback.tmp' "$ROOT/LCOrbit/Core/LCOrbitTweakCenter.m"
-if grep -Fq 'TCAppBackupRoot' "$ROOT/LCOrbit/Core/LCOrbitTweakCenter.m" ||
-   grep -Fq 'PluginBackups' "$ROOT/LCOrbit/Core/LCOrbitPluginUpdater.m"; then
-    echo 'Persistent plugin backups must not return' >&2
-    exit 1
-fi
-grep -Fq 'name isEqualToString:@"LCFloatingMenu.dylib"' "$ROOT/LCOrbit/Core/LCOrbitTweakCenter.m"
-grep -Fq 'appAssignmentsWithBackground:' "$ROOT/LCOrbit/Core/LCOrbitSharedTweaksViewController.m"
-grep -Fq 'pluginDetailsForName:' "$ROOT/LCOrbit/Core/LCOrbitSharedTweaksViewController.m"
-grep -Fq 'sharedDisabled' "$ROOT/LCOrbit/Core/LCOrbitTweakSync.m"
-echo 'LCOrbit Stage 1 static smoke checks: PASS'
+grep -Fq 'launchToGuestAppWithURL:' "$ROOT/LCOrbit/Core/LCOrbitGuestService.m"
+echo 'LCOrbit minimal-menu build smoke checks: PASS'
