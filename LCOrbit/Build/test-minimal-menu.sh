@@ -48,5 +48,7 @@ settings=s[s.index('- (void)openSettingsInScene:(UIWindowScene *)scene {'):]
 
 settings=settings[:settings.index('\n}')+2]
 if 'visible:NO' in settings: raise SystemExit('Opening Settings must not hide the floating overlay')
+if 'win.windowLevel = UIWindowLevelNormal + 70;' not in settings:
+    raise SystemExit('Settings window must sit below the floating overlay window')
 print('FloatingMenu source contracts: PASS')
 PY

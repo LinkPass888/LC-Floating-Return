@@ -9,5 +9,3 @@
 - 提供恢复默认设置；恢复时清除旧版本遗留及当前不再支持的参数。
 
 Compiled `LCFloatingReturn.dylib` is unsigned; import it into LC+SS Tweaks and sign it there.
-
-维护者：LinkPass888

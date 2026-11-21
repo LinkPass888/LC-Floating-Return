@@ -695,7 +695,7 @@ static CGFloat FMOrbYRatioPref(void) {
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     UIWindow *win = [[UIWindow alloc] initWithWindowScene:scene];
     win.frame = scene.coordinateSpace.bounds;
-    win.windowLevel = UIWindowLevelNormal + 90;
+    win.windowLevel = UIWindowLevelNormal + 70;
     win.rootViewController = nav;
     self.settingsWindow = win;
     [win makeKeyAndVisible];
