@@ -21,6 +21,8 @@ done
 # The minimal return-only FloatingMenu intentionally drops drawer-specific UI.
 # Retain only source contracts relevant to the new module and shared runtime.
 grep -Fq -- '- (void)returnToLiveContainer' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
+grep -Fq 'handleLongPress:' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
+grep -Fq 'launchGuestPath:@"ui" uuid:nil error:&error' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
 grep -Fq 'orbitDidStartWithContext:' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
 grep -Fq 'orbitWillStop' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"
 grep -Fq 'LCFloatingMenuRegisterWithOrbit' "$ROOT/LCFloatingMenu/LCFloatingMenu.m"

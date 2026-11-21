@@ -12,6 +12,7 @@
 
 #import "../LCOrbit/Core/LCOrbitCore.h"
 #import "../LCOrbit/Core/LCOrbitHost.h"
+#import "../LCOrbit/Core/LCOrbitGuestService.h"
 #import "../LCOrbit/Core/LCOrbitHostSettings.h"
 #import "../LCOrbit/Core/LCOrbitMultitask.h"
 #import "../LCOrbit/Core/LCOrbitOverlayManager.h"
@@ -357,9 +358,13 @@ static CGFloat FMOrbYRatioPref(void) {
     [orb addSubview:icon];
 
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
+    UILongPressGestureRecognizer *hold = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
+    hold.minimumPressDuration = 0.55;
     UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
     [tap requireGestureRecognizerToFail:pan];
+    [tap requireGestureRecognizerToFail:hold];
     [orb addGestureRecognizer:tap];
+    [orb addGestureRecognizer:hold];
     [orb addGestureRecognizer:pan];
 
     [self.hostView addSubview:orb];
@@ -526,6 +531,11 @@ static CGFloat FMOrbYRatioPref(void) {
     }
 }
 
+- (void)handleLongPress:(UILongPressGestureRecognizer *)gesture {
+    if (gesture.state != UIGestureRecognizerStateBegan) return;
+    [self openSettingsInScene:self.window.windowScene ?: [LCOrbitHost activeScene]];
+}
+
 - (void)handleTap:(UITapGestureRecognizer *)tap {
     if (tap.state != UIGestureRecognizerStateEnded) return;
     [self returnToLiveContainer];
@@ -538,20 +548,9 @@ static CGFloat FMOrbYRatioPref(void) {
         return;
     }
 
-    // Single-app / Guest mode: clear selected app so LC stays on home screen, then reopen LC.
-    NSUserDefaults *hostDefaults = [LCOrbitHost hostDefaults];
-    [hostDefaults removeObjectForKey:@"selected"];
-    [hostDefaults removeObjectForKey:@"selectedContainer"];
-    [hostDefaults synchronize];
-
-    NSURL *url = [NSURL URLWithString:@"livecontainer://open-web-page?url=about://blank"];
-    UIApplication *app = UIApplication.sharedApplication;
-    if (url && [app respondsToSelector:@selector(openURL:options:completionHandler:)]) {
-        [app openURL:url options:@{} completionHandler:^(BOOL success) {
-            if (!success) exit(0);
-        }];
-    } else {
-        exit(0);
+    NSError *error = nil;
+    if (![LCOrbitGuestService launchGuestPath:@"ui" uuid:nil error:&error]) {
+        NSLog(@"[LCFloatingMenu] Return to LiveContainer failed: %@", error.localizedDescription);
     }
 }
 
