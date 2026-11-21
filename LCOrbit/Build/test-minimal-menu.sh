@@ -18,8 +18,11 @@ required=[
  'UILongPressGestureRecognizer *hold',
  '- (void)closeSettings',
  'LCFloatingMenuRegisterWithOrbit',
+ 'FM_MENU_VERSION @"0.1.0"',
  'LCOrbitOverlayManager',
  'visibleGuestApps',
+ 'showInHostUI',
+ 'showInHostChanged:',
  'appVisibilityChanged:',
  'restoreDefaults',
  'isCurrentGuest:app',
@@ -32,8 +35,10 @@ for removed in ['compatibilityPage:', 'refreshInventoryInBackground', 'switchFro
 show=s[s.index('- (BOOL)shouldShowOrb {'):]
 show=show[:show.index('\n}')+2]
 if 'settingsWindow' in show: raise SystemExit('The button must remain visible while Settings is open')
-if '[LCOrbitHost isHostUI] || ![LCOrbitHost guestInfo]' not in show:
-    raise SystemExit('The floating button must only be shown in an active Guest app')
+if '[LCOrbitHost isHostUI]' not in show or 'showInHostUI' not in show:
+    raise SystemExit('LC host visibility must be explicitly controlled by the setting')
+if 'self.showInHostSwitch.on = [[FMPrefs() objectForKey:FMPrefKey(@"showInHostUI")] boolValue]' not in s:
+    raise SystemExit('The LC host visibility setting must default to off')
 settings=s[s.index('- (void)openSettingsInScene:(UIWindowScene *)scene {'):]
 
 settings=settings[:settings.index('\n}')+2]

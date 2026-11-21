@@ -1,4 +1,4 @@
-# LC Floating Return Button
+# LC Floating Return Button 0.1.0
 
 这是一个面向 LiveContainer / SideStore Guest 的精简悬浮返回按钮插件。
 
@@ -6,8 +6,8 @@
 - 点击悬浮按钮：返回 LiveContainer 首页。
 - 长按约 0.55 秒：打开按钮外观设置。
 - 拖动按钮：沿屏幕移动，松手后吸附到左右边缘。
-- 仅在运行中的 Guest App 显示；LC 主界面不显示。外观设置可逐 App 开关显示状态。
-- 「恢复默认设置」恢复当前外观默认值、默认所有 App 显示，并清理废弃参数。
+- 仅在已打开并启用插件的 Guest App 中显示，可在设置里逐 App 开关；LC 主界面显示开关单独控制，默认关闭。
+- 「恢复默认设置」恢复当前外观默认值、默认 Guest App 显示范围并关闭 LC 主界面显示，同时清理废弃参数。
 
 ## 构建
 

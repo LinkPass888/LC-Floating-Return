@@ -10,6 +10,8 @@
 #import <math.h>
 #import <stdlib.h>
 
+#define FM_MENU_VERSION @"0.1.0"
+
 #import "../LCOrbit/Core/LCOrbitCore.h"
 #import "../LCOrbit/Core/LCOrbitHost.h"
 #import "../LCOrbit/Core/LCOrbitGuestService.h"
@@ -148,6 +150,7 @@ static CGFloat FMOrbYRatioPref(void) {
 @property (nonatomic, strong) UILabel *opacityValueLabel;
 @property (nonatomic, copy) NSArray<NSDictionary *> *guestApps;
 @property (nonatomic, strong) NSMutableSet<NSString *> *visibleGuestIdentities;
+@property (nonatomic, strong) UISwitch *showInHostSwitch;
 @end
 
 @implementation FMStyleSettingsViewController
@@ -203,6 +206,9 @@ static CGFloat FMOrbYRatioPref(void) {
         }
     }
     self.guestApps = apps;
+    self.showInHostSwitch = [UISwitch new];
+    self.showInHostSwitch.on = [[FMPrefs() objectForKey:FMPrefKey(@"showInHostUI")] boolValue];
+    [self.showInHostSwitch addTarget:self action:@selector(showInHostChanged:) forControlEvents:UIControlEventValueChanged];
     id saved = [FMPrefs() objectForKey:FMPrefKey(@"visibleGuestApps")];
     if ([saved isKindOfClass:NSArray.class]) {
         self.visibleGuestIdentities = [NSMutableSet setWithArray:saved];
@@ -235,6 +241,12 @@ static CGFloat FMOrbYRatioPref(void) {
 - (void)opacityChanged:(UISlider *)sender {
     self.opacityValueLabel.text = [NSString stringWithFormat:@"%d%%", (int)lroundf(sender.value * 100.0f)];
     FMSetNumberPref(@"orbOpacity", @(sender.value));
+    if (self.onChange) self.onChange();
+}
+
+- (void)showInHostChanged:(UISwitch *)sender {
+    [FMPrefs() setObject:@(sender.isOn) forKey:FMPrefKey(@"showInHostUI")];
+    [FMPrefs() synchronize];
     if (self.onChange) self.onChange();
 }
 
@@ -271,6 +283,7 @@ static CGFloat FMOrbYRatioPref(void) {
         strongSelf.scaleValueLabel.text = @"1.00x";
         strongSelf.opacitySlider.value = 0.78f;
         strongSelf.opacityValueLabel.text = @"78%";
+        strongSelf.showInHostSwitch.on = NO;
         strongSelf.visibleGuestIdentities = [NSMutableSet set];
         for (NSDictionary *app in strongSelf.guestApps) [strongSelf.visibleGuestIdentities addObject:app[@"identity"]];
         [strongSelf.tableView reloadData];
@@ -287,7 +300,7 @@ static CGFloat FMOrbYRatioPref(void) {
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     (void)tableView;
     if (section == 0 || section == 1) return 2;
-    return self.guestApps.count + 1;
+    return self.guestApps.count + 2;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
@@ -299,8 +312,8 @@ static CGFloat FMOrbYRatioPref(void) {
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     (void)tableView;
-    if (section == 1) return @"仅在已打开且启用本插件的 Guest App 中显示；LC 主界面不显示。";
-    if (section == 2) return @"默认对所有已安装 App 显示。取消选择后，该 App 内不显示悬浮按钮。";
+    if (section == 1) return @"仅在已打开且启用本插件的 Guest App 中显示。";
+    if (section == 2) return @"LC 主界面开关默认关闭；下方可独立选择哪些 Guest App 显示。";
     return nil;
 }
 
@@ -310,14 +323,20 @@ static CGFloat FMOrbYRatioPref(void) {
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     if (indexPath.section == 2) {
-        if (indexPath.row == self.guestApps.count) {
+        if (indexPath.row == 0) {
+            cell.textLabel.text = @"在 LC 主界面显示";
+            cell.detailTextLabel.text = @"默认关闭";
+            cell.accessoryView = self.showInHostSwitch;
+            return cell;
+        }
+        if (indexPath.row == self.guestApps.count + 1) {
             cell.textLabel.text = @"恢复默认设置";
             cell.textLabel.textAlignment = NSTextAlignmentCenter;
             cell.textLabel.textColor = UIColor.systemRedColor;
             cell.selectionStyle = UITableViewCellSelectionStyleDefault;
             return cell;
         }
-        NSDictionary *app = self.guestApps[indexPath.row];
+        NSDictionary *app = self.guestApps[indexPath.row - 1];
         cell.textLabel.text = app[@"title"] ?: app[@"path"];
         cell.detailTextLabel.text = app[@"bundle"];
         UISwitch *toggle = [UISwitch new];
@@ -373,7 +392,7 @@ static CGFloat FMOrbYRatioPref(void) {
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath.section == 2 && indexPath.row == self.guestApps.count) {
+    if (indexPath.section == 2 && indexPath.row == self.guestApps.count + 1) {
         [self restoreDefaults];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -460,7 +479,11 @@ static CGFloat FMOrbYRatioPref(void) {
 }
 
 - (BOOL)shouldShowOrb {
-    if ([LCOrbitHost isHostUI] || ![LCOrbitHost guestInfo]) return NO;
+    if ([LCOrbitHost isHostUI]) {
+        return [[FMPrefs() objectForKey:FMPrefKey(@"showInHostUI")] boolValue] &&
+            [LCOrbitMultitask shouldShowFloatingMenu];
+    }
+    if (![LCOrbitHost guestInfo]) return NO;
     id configured = [FMPrefs() objectForKey:FMPrefKey(@"visibleGuestApps")];
     if (![configured isKindOfClass:NSArray.class]) return YES;
     NSSet *allowed = [NSSet setWithArray:configured];
