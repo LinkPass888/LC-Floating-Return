@@ -1,7 +1,0 @@
-LCFloatingMenu v1.0.29 formal release request
-
-Version: 1.0.29
-Source: latest lcss-original including restored classic droplet outline, animation-off fix and update controls
-Notes: LCFloatingMenu/RELEASE_NOTES_1.0.29.md
-Publish: fresh compile and verify arm64 LCFloatingMenu.dylib, create annotated 1.0.29 tag, GitHub Release, and refresh fm-latest.
-Request: republish after old 1.0.29 Release and Tag were deleted on 2026-11-04.
