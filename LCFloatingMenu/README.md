@@ -1,17 +1,31 @@
-# LCFloatingMenu for LiveContainer + SideStore
+# LCFloatingMenu（精简返回按钮版）
 
-> Orbit Stage 1 now bundles the existing FloatingMenu module with a modular Core into the same standalone dylib. Existing `LCFloatingMenu.*` preferences and installation steps are preserved.
+> **当前分支构建的是精简版源码**，不是下方历史记录中描述的完整抽屉/多任务菜单。历史功能说明作为之前版本的文档留存；其中列出的 App 切换、收藏、插件管理、诊断日志、更新器及高级抽屉设置等，当前精简版均不提供。
 
+Standalone iOS 16+ arm64 tweak for classic single-task Guests and the opted-in LC host UI. Maintained on `lcss-original`.
 
-Standalone iOS 16+ arm64 tweak for classic single-task Guests and the opted-in LC host UI. Host injection also supports the optional fullscreen multitask switcher described below. Maintained on `lcss-original`.
+## 当前版本功能
+- 屏幕边缘的磨砂悬浮按钮，可拖动并吸附屏幕左右边缘。
+- **点击悬浮按钮**：在经典 Guest 中通过 LiveContainer 正式启动接口返回 LC 首页；在 LC 宿主 UI 中调用多任务首页。
+- **长按悬浮按钮约 0.55 秒**：打开外观设置，可调整按钮款式、大小、透明度和外观模式；点击「完成」关闭设置并返回。
+- 设置值写入 `LCOrbit` 配置；首次安装或替换 dylib 时，按 LC+SS 的 Tweak 管理流程导入并签名。
 
-## Features
-- A slim draggable frosted-glass side-notch tab, soft highlight and drawer animations.
-- Expandable translucent app switcher: return to LiveContainer, restart, switch to another LC guest.
-- Built-in settings, tab tint, size and opacity controls, haptic and confirmation toggles.
-- Diagnostics: loading, overlay lifecycle, allowed/rejected switching, error categories. Share a `.json` file using the iOS share sheet; clear logs with confirmation. Size is limited to 256 KiB per file with a single rotated backup (approx. 512 KiB total).
-- Per-app override of confirmation and collapsed opacity, saved in LCOrbit/config.json with legacy preference migration.
-- Classic Guest switching restarts the LC guest process. The host's optional fullscreen multitask mode starts LC LiveProcess guests and switches existing tasks without terminating them.
+## 当前版本不包含
+App 抽屉与 Guest 切换列表、收藏、任务关闭/重启入口、完整微珠设置和各设置子页、诊断/日志 UI、插件更新与插件管理中心等完整版功能。README 下方旧版历史内容不适用于当前精简版。
+
+## Download & Install
+- GitHub Actions：`Build LCFloatingMenu dylib` → artifact `LCFloatingMenu-dylib`。
+- 在 LC+SS → Tweaks 中建立或选择 `LCFloatingMenu` 文件夹，导入 dylib 并执行签名，然后在目标 Guest 的设置中选择该插件文件夹。
+- 点击悬浮按钮返回 LC 首页；长按进入外观设置。需要在实际设备安装验证。
+
+## Build
+在 macOS + Xcode 环境运行：
+
+```sh
+LCOrbit/Build/build.sh dist/LCFloatingMenu.dylib
+LCOrbit/Tests/verify.sh dist/LCFloatingMenu.dylib
+```
+
 
 ## 侧边刘海抽屉（2026-10-28）
 
