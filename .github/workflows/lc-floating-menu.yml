@@ -1,5 +1,5 @@
-name: Build LCFloatingMenu dylib
-run-name: FloatingMenu ${{ github.ref_type == 'tag' && 'release' || 'build' }} - ${{ github.ref_name }}
+name: Build LCFloatingReturn dylib
+run-name: LCFloatingReturn ${{ github.ref_type == 'tag' && 'release' || 'build' }} - ${{ github.ref_name }}
 
 # Branch updates create a downloadable Actions artifact, never a Release.
 # A semantic-version tag is pushed only when a formal release is requested.
@@ -46,13 +46,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          LCOrbit/Build/build.sh dist/LCFloatingMenu.dylib
-          LCOrbit/Tests/verify.sh dist/LCFloatingMenu.dylib
+          LCOrbit/Build/build.sh dist/LCFloatingReturn.dylib
+          LCOrbit/Tests/verify.sh dist/LCFloatingReturn.dylib
       - name: Upload GitHub Actions artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LCFloatingMenu-dylib
-          path: dist/LCFloatingMenu.dylib
+          name: LCFloatingReturn-dylib
+          path: dist/LCFloatingReturn.dylib
           if-no-files-found: error
           retention-days: 14
   publish:
@@ -67,7 +67,7 @@ jobs:
       - name: Download verified build
         uses: actions/download-artifact@v4
         with:
-          name: LCFloatingMenu-dylib
+          name: LCFloatingReturn-dylib
           path: dist
       - name: Publish version and refresh separate FloatingMenu latest
         shell: bash
@@ -78,11 +78,12 @@ jobs:
           VERSION="$GITHUB_REF_NAME"
           TAG="$VERSION"
           LATEST_TAG="fm-latest"
-          BINARY="dist/LCFloatingMenu.dylib"
+          BINARY="dist/LCFloatingReturn.dylib"
           test -s "$BINARY"
           sha256sum "$BINARY" || shasum -a 256 "$BINARY"
 
-          # Keep the actual .dylib name unchanged in BOTH releases.
+          # LCFloatingReturn.dylib must be imported into LC+SS and signed by the user.
+          # The distributed binary is intentionally not pre-signed.
           # Release notes from this tag are published with the binary.
           NOTES="LCFloatingMenu/RELEASE_NOTES_${VERSION}.md"
           if [[ ! -s "$NOTES" ]]; then
@@ -96,7 +97,7 @@ jobs:
           else
             gh release create "$TAG" "$BINARY" \
               --repo "$GITHUB_REPOSITORY" --verify-tag --target "$GITHUB_SHA" \
-              --title "LCFloatingMenu $VERSION" \
+              --title "LCFloatingReturn $VERSION" \
               --notes-file "$NOTES" \
               --latest
           fi
@@ -125,13 +126,13 @@ jobs:
             gh release upload "$LATEST_TAG" "$BINARY" dist/latest-info.txt \
               --repo "$GITHUB_REPOSITORY" --clobber
             gh release edit "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" \
-              --title "LCFloatingMenu latest ($VERSION)" \
+              --title "LCFloatingReturn latest ($VERSION)" \
               --notes-file dist/latest-info.txt --prerelease --latest=false
           else
             gh release create "$LATEST_TAG" "$BINARY" dist/latest-info.txt \
               --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-              --title "LCFloatingMenu latest ($VERSION)" \
+              --title "LCFloatingReturn latest ($VERSION)" \
               --notes-file dist/latest-info.txt --prerelease --latest=false
           fi
-          echo "Versioned: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/LCFloatingMenu.dylib"
-          echo "Latest: https://github.com/$GITHUB_REPOSITORY/releases/download/$LATEST_TAG/LCFloatingMenu.dylib"
+          echo "Versioned: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/LCFloatingReturn.dylib"
+          echo "Latest: https://github.com/$GITHUB_REPOSITORY/releases/download/$LATEST_TAG/LCFloatingReturn.dylib"

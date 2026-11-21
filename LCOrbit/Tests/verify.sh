@@ -2,12 +2,12 @@
 # Build-output smoke check; behavior on a physical Guest still requires device tests.
 set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-BINARY="${1:-$ROOT/dist/LCFloatingMenu.dylib}"
+BINARY="${1:-$ROOT/dist/LCFloatingReturn.dylib}"
 test -s "$BINARY"
 test "$(xcrun lipo -archs "$BINARY")" = 'arm64'
 xcrun vtool -show-build "$BINARY" | grep -q 'platform IOS'
 xcrun vtool -show-build "$BINARY" | grep -q 'minos 16.0'
-xcrun otool -D "$BINARY" | grep -Fq '@rpath/LCFloatingMenu.dylib'
+xcrun otool -D "$BINARY" | grep -Fq '@rpath/LCFloatingReturn.dylib'
 SYMBOLS="$(xcrun nm -gU "$BINARY")"
 for symbol in 'OBJC_CLASS_$_LCOrbitCore' 'OBJC_CLASS_$_LCOrbitHost' \
               'OBJC_CLASS_$_LCOrbitOverlayManager' 'OBJC_CLASS_$_LCOrbitEventBus' \

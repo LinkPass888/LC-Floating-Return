@@ -30,6 +30,11 @@ required=[
 ]
 missing=[x for x in required if x not in s]
 if missing: raise SystemExit('Missing FloatingMenu contract: '+', '.join(missing))
+root=Path(sys.argv[1]).parents[1]
+if 'LCFloatingReturn.dylib' not in (root/'LCOrbit/Build/build.sh').read_text():
+    raise SystemExit('Build output name must be LCFloatingReturn.dylib')
+if "'@rpath/LCFloatingReturn.dylib'" not in (root/'LCOrbit/Tests/verify.sh').read_text():
+    raise SystemExit('Binary install name must be LCFloatingReturn.dylib')
 for removed in ['compatibilityPage:', 'refreshInventoryInBackground', 'switchFromRow:', 'presentAdaptiveDrawer']:
     if removed in s: raise SystemExit('Unexpected legacy menu feature remains: '+removed)
 show=s[s.index('- (BOOL)shouldShowOrb {'):]

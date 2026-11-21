@@ -2,7 +2,7 @@
 set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
-OUT="${1:-$ROOT/dist/LCFloatingMenu.dylib}"
+OUT="${1:-$ROOT/dist/LCFloatingReturn.dylib}"
 # Embed the source commit so Settings can compare against GitHub accurately.
 BUILD_COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
 case "$BUILD_COMMIT" in
@@ -16,7 +16,7 @@ sh "$ROOT/LCOrbit/Build/test-minimal-menu.sh"
 mkdir -p "$(dirname "$OUT")"
 xcrun clang "$BUILD_COMMIT_FLAG" -arch arm64 -isysroot "$SDK" -miphoneos-version-min=16.0 -fobjc-arc -O2 \
     -dynamiclib -framework Foundation -framework UIKit -framework QuartzCore \
-    -framework CoreGraphics -framework Security -install_name '@rpath/LCFloatingMenu.dylib' \
+    -framework CoreGraphics -framework Security -install_name '@rpath/LCFloatingReturn.dylib' \
     "$ROOT/LCOrbit/Core/LCOrbitCore.m" \
     "$ROOT/LCOrbit/Core/LCOrbitHost.m" \
     "$ROOT/LCOrbit/Core/LCOrbitGuestUIKitDiagnostics.m" \

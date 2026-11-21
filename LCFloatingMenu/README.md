@@ -1,4 +1,4 @@
-# LCFloatingMenu
+# LCFloatingReturn
 
 当前版本 **0.1.0**，是精简返回按钮版。点击悬浮按钮返回 LiveContainer 首页，长按约 0.55 秒打开设置，拖动可重新定位并吸附屏幕边缘。默认只在运行中的 Guest App 显示；设置页的「在 LC 主界面显示」开关默认关闭，可按需开启。
 
@@ -8,15 +8,15 @@
 
 ## 安装
 
-从 GitHub Actions 的 `Build LCFloatingMenu dylib` 工作流下载 `LCFloatingMenu-dylib` artifact。在 LC+SS 的 Tweaks 管理器中导入 `LCFloatingMenu.dylib` 并签名，然后将该 tweak 文件夹分配给目标 Guest。
+从 GitHub Actions 的 `Build LCFloatingReturn dylib` 工作流下载 `LCFloatingReturn-dylib` artifact。发行文件名为 `LCFloatingReturn.dylib`。在 LC+SS Tweaks 管理器中导入该 dylib、重新签名，然后将该 tweak 文件夹分配给目标 Guest。
 
 ## 构建
 
 需要 macOS 与 Xcode：
 
 ```sh
-LCOrbit/Build/build.sh dist/LCFloatingMenu.dylib
-LCOrbit/Tests/verify.sh dist/LCFloatingMenu.dylib
+LCOrbit/Build/build.sh dist/LCFloatingReturn.dylib
+LCOrbit/Tests/verify.sh dist/LCFloatingReturn.dylib
 ```
 
 实际设备上的返回行为、设置窗口和签名加载需要在 LiveContainer / SideStore 环境验证。

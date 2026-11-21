@@ -1,4 +1,4 @@
-# LCFloatingMenu 0.1.0
+# LCFloatingReturn 0.1.0
 
 首个精简返回按钮正式版。
 
@@ -8,6 +8,6 @@
 - 可选在 LC 主界面显示，默认关闭。
 - 提供恢复默认设置；恢复时清除旧版本遗留及当前不再支持的参数。
 
-需要在 LC+SS 的 Tweaks 管理器中导入 `LCFloatingMenu.dylib` 并重新签名。该二进制不预签名。
+Compiled `LCFloatingReturn.dylib` is unsigned; import it into LC+SS Tweaks and sign it there.
 
 维护者：LinkPass888
