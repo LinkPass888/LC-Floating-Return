@@ -374,7 +374,6 @@ static CGFloat FMOrbYRatioPref(void) {
 }
 
 - (BOOL)shouldShowOrb {
-    if (self.settingsWindow) return NO;
     if ([LCOrbitHost isHostUI]) {
         return [LCOrbitMultitask shouldShowFloatingMenu];
     }
@@ -570,8 +569,6 @@ static CGFloat FMOrbYRatioPref(void) {
             break;
         }
     }
-
-    [self.orbitContext.overlays setModule:@"FloatingMenu" visible:NO];
 
     FMStyleSettingsViewController *vc = [FMStyleSettingsViewController new];
     __weak typeof(self) weakSelf = self;

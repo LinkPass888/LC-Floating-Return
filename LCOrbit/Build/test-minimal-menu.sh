@@ -24,5 +24,11 @@ missing=[x for x in required if x not in s]
 if missing: raise SystemExit('Missing FloatingMenu contract: '+', '.join(missing))
 for removed in ['compatibilityPage:', 'refreshInventoryInBackground', 'switchFromRow:', 'presentAdaptiveDrawer']:
     if removed in s: raise SystemExit('Unexpected legacy menu feature remains: '+removed)
+show=s[s.index('- (BOOL)shouldShowOrb {'):]
+show=show[:show.index('\n}')+2]
+if 'settingsWindow' in show: raise SystemExit('The button must remain visible while Settings is open')
+settings=s[s.index('- (void)openSettingsInScene:(UIWindowScene *)scene {'):]
+settings=settings[:settings.index('\n}')+2]
+if 'visible:NO' in settings: raise SystemExit('Opening Settings must not hide the floating overlay')
 print('FloatingMenu source contracts: PASS')
 PY
