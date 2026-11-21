@@ -93,6 +93,29 @@ static CGFloat FMOrbYRatioPref(void) {
     return FMFloatPref(@"orbYRatio", 0.48, 0.08, 0.92);
 }
 
+// Store only explicit exclusions so apps installed later are visible by default.
+static NSSet<NSString *> *FMHiddenGuestAppIdentities(void) {
+    id hidden = [FMPrefs() objectForKey:FMPrefKey(@"hiddenGuestApps")];
+    if ([hidden isKindOfClass:NSArray.class]) return [NSSet setWithArray:hidden];
+
+    // Migrate the earlier allow-list without changing the user's existing choices.
+    id legacyVisible = [FMPrefs() objectForKey:FMPrefKey(@"visibleGuestApps")];
+    if (![legacyVisible isKindOfClass:NSArray.class]) return [NSSet set];
+    NSSet *visible = [NSSet setWithArray:legacyVisible];
+    NSMutableSet *excluded = [NSMutableSet set];
+    for (NSDictionary *app in [LCOrbitGuestService installedApps]) {
+        NSString *identity = app[@"identity"];
+        if (![app[@"builtin"] boolValue] && identity.length && ![visible containsObject:identity]) {
+            [excluded addObject:identity];
+        }
+    }
+    [FMPrefs() setObject:[[excluded allObjects] sortedArrayUsingSelector:@selector(compare:)]
+                  forKey:FMPrefKey(@"hiddenGuestApps")];
+    [FMPrefs() removeObjectForKey:FMPrefKey(@"visibleGuestApps")];
+    [FMPrefs() synchronize];
+    return [excluded copy];
+}
+
 #pragma mark - Overlay Pass-Through Container
 
 @interface FMOverlayHostView : UIView
@@ -166,7 +189,7 @@ static CGFloat FMOrbYRatioPref(void) {
 @property (nonatomic, strong) UISlider *opacitySlider;
 @property (nonatomic, strong) UILabel *opacityValueLabel;
 @property (nonatomic, copy) NSArray<NSDictionary *> *guestApps;
-@property (nonatomic, strong) NSMutableSet<NSString *> *visibleGuestIdentities;
+@property (nonatomic, strong) NSMutableSet<NSString *> *hiddenGuestIdentities;
 @property (nonatomic, strong) UISwitch *showInHostSwitch;
 @end
 
@@ -226,13 +249,7 @@ static CGFloat FMOrbYRatioPref(void) {
     self.showInHostSwitch = [UISwitch new];
     self.showInHostSwitch.on = [[FMPrefs() objectForKey:FMPrefKey(@"showInHostUI")] boolValue];
     [self.showInHostSwitch addTarget:self action:@selector(showInHostChanged:) forControlEvents:UIControlEventValueChanged];
-    id saved = [FMPrefs() objectForKey:FMPrefKey(@"visibleGuestApps")];
-    if ([saved isKindOfClass:NSArray.class]) {
-        self.visibleGuestIdentities = [NSMutableSet setWithArray:saved];
-    } else {
-        self.visibleGuestIdentities = [NSMutableSet set];
-        for (NSDictionary *app in self.guestApps) [self.visibleGuestIdentities addObject:app[@"identity"]];
-    }
+    self.hiddenGuestIdentities = [FMHiddenGuestAppIdentities() mutableCopy];
 }
 
 - (void)doneTapped {
@@ -270,10 +287,10 @@ static CGFloat FMOrbYRatioPref(void) {
 - (void)appVisibilityChanged:(UISwitch *)sender {
     NSString *identity = sender.accessibilityIdentifier;
     if (!identity.length) return;
-    if (sender.isOn) [self.visibleGuestIdentities addObject:identity];
-    else [self.visibleGuestIdentities removeObject:identity];
-    NSArray *saved = [[self.visibleGuestIdentities allObjects] sortedArrayUsingSelector:@selector(compare:)];
-    [FMPrefs() setObject:saved forKey:FMPrefKey(@"visibleGuestApps")];
+    if (sender.isOn) [self.hiddenGuestIdentities removeObject:identity];
+    else [self.hiddenGuestIdentities addObject:identity];
+    NSArray *saved = [[self.hiddenGuestIdentities allObjects] sortedArrayUsingSelector:@selector(compare:)];
+    [FMPrefs() setObject:saved forKey:FMPrefKey(@"hiddenGuestApps")];
     [FMPrefs() synchronize];
     if (self.onChange) self.onChange();
 }
@@ -301,8 +318,7 @@ static CGFloat FMOrbYRatioPref(void) {
         strongSelf.opacitySlider.value = 0.78f;
         strongSelf.opacityValueLabel.text = @"78%";
         strongSelf.showInHostSwitch.on = NO;
-        strongSelf.visibleGuestIdentities = [NSMutableSet set];
-        for (NSDictionary *app in strongSelf.guestApps) [strongSelf.visibleGuestIdentities addObject:app[@"identity"]];
+        strongSelf.hiddenGuestIdentities = [NSMutableSet set];
         [strongSelf.tableView reloadData];
         if (strongSelf.onChange) strongSelf.onChange();
     }]];
@@ -358,7 +374,7 @@ static CGFloat FMOrbYRatioPref(void) {
         cell.detailTextLabel.text = app[@"bundle"];
         UISwitch *toggle = [UISwitch new];
         toggle.accessibilityIdentifier = app[@"identity"];
-        toggle.on = [self.visibleGuestIdentities containsObject:app[@"identity"]];
+        toggle.on = ![self.hiddenGuestIdentities containsObject:app[@"identity"]];
         [toggle addTarget:self action:@selector(appVisibilityChanged:) forControlEvents:UIControlEventValueChanged];
         cell.accessoryView = toggle;
         return cell;
@@ -501,11 +517,11 @@ static CGFloat FMOrbYRatioPref(void) {
             [LCOrbitMultitask shouldShowFloatingMenu];
     }
     if (![LCOrbitHost guestInfo]) return NO;
-    id configured = [FMPrefs() objectForKey:FMPrefKey(@"visibleGuestApps")];
-    if (![configured isKindOfClass:NSArray.class]) return YES;
-    NSSet *allowed = [NSSet setWithArray:configured];
+    NSSet *hidden = FMHiddenGuestAppIdentities();
     for (NSDictionary *app in [LCOrbitGuestService installedApps]) {
-        if ([allowed containsObject:app[@"identity"]] && [LCOrbitGuestService isCurrentGuest:app]) return YES;
+        if ([LCOrbitGuestService isCurrentGuest:app]) {
+            return ![hidden containsObject:app[@"identity"]];
+        }
     }
     return NO;
 }
