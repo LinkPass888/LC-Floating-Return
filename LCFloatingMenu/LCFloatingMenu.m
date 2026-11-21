@@ -146,6 +146,8 @@ static CGFloat FMOrbYRatioPref(void) {
 @property (nonatomic, strong) UILabel *scaleValueLabel;
 @property (nonatomic, strong) UISlider *opacitySlider;
 @property (nonatomic, strong) UILabel *opacityValueLabel;
+@property (nonatomic, copy) NSArray<NSDictionary *> *guestApps;
+@property (nonatomic, strong) NSMutableSet<NSString *> *visibleGuestIdentities;
 @end
 
 @implementation FMStyleSettingsViewController
@@ -193,6 +195,21 @@ static CGFloat FMOrbYRatioPref(void) {
     self.opacityValueLabel.textColor = UIColor.secondaryLabelColor;
     self.opacityValueLabel.textAlignment = NSTextAlignmentRight;
     self.opacityValueLabel.text = [NSString stringWithFormat:@"%d%%", (int)lroundf(self.opacitySlider.value * 100.0f)];
+
+    NSMutableArray *apps = [NSMutableArray array];
+    for (NSDictionary *app in [LCOrbitGuestService installedApps]) {
+        if (![app[@"builtin"] boolValue] && [app[@"identity"] isKindOfClass:NSString.class]) {
+            [apps addObject:app];
+        }
+    }
+    self.guestApps = apps;
+    id saved = [FMPrefs() objectForKey:FMPrefKey(@"visibleGuestApps")];
+    if ([saved isKindOfClass:NSArray.class]) {
+        self.visibleGuestIdentities = [NSMutableSet setWithArray:saved];
+    } else {
+        self.visibleGuestIdentities = [NSMutableSet set];
+        for (NSDictionary *app in self.guestApps) [self.visibleGuestIdentities addObject:app[@"identity"]];
+    }
 }
 
 - (void)doneTapped {
@@ -221,33 +238,95 @@ static CGFloat FMOrbYRatioPref(void) {
     if (self.onChange) self.onChange();
 }
 
+- (void)appVisibilityChanged:(UISwitch *)sender {
+    NSString *identity = sender.accessibilityIdentifier;
+    if (!identity.length) return;
+    if (sender.isOn) [self.visibleGuestIdentities addObject:identity];
+    else [self.visibleGuestIdentities removeObject:identity];
+    NSArray *saved = [[self.visibleGuestIdentities allObjects] sortedArrayUsingSelector:@selector(compare:)];
+    [FMPrefs() setObject:saved forKey:FMPrefKey(@"visibleGuestApps")];
+    [FMPrefs() synchronize];
+    if (self.onChange) self.onChange();
+}
+
+- (void)restoreDefaults {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"恢复默认设置？"
+        message:@"将恢复悬浮按钮外观、位置和 App 显示范围。"
+        preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
+    __weak typeof(self) weakSelf = self;
+    [alert addAction:[UIAlertAction actionWithTitle:@"恢复默认" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        (void)action;
+        FMStyleSettingsViewController *strongSelf = weakSelf;
+        if (!strongSelf) return;
+        for (NSString *key in [[FMPrefs() dictionaryRepresentation] allKeys]) {
+            if ([key hasPrefix:@"LCFloatingMenu."] || [key hasPrefix:@"LCOrbit.module.FloatingMenu."]) {
+                [FMPrefs() removeObjectForKey:key];
+            }
+        }
+        [FMPrefs() synchronize];
+        strongSelf.styleControl.selectedSegmentIndex = FMOrbStyleCapsule;
+        strongSelf.appearanceControl.selectedSegmentIndex = FMAppearanceSystem;
+        strongSelf.scaleSlider.value = 1.0f;
+        strongSelf.scaleValueLabel.text = @"1.00x";
+        strongSelf.opacitySlider.value = 0.78f;
+        strongSelf.opacityValueLabel.text = @"78%";
+        strongSelf.visibleGuestIdentities = [NSMutableSet set];
+        for (NSDictionary *app in strongSelf.guestApps) [strongSelf.visibleGuestIdentities addObject:app[@"identity"]];
+        [strongSelf.tableView reloadData];
+        if (strongSelf.onChange) strongSelf.onChange();
+    }]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     (void)tableView;
-    return 2;
+    return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     (void)tableView;
-    return section == 0 ? 2 : 2;
+    if (section == 0 || section == 1) return 2;
+    return self.guestApps.count + 1;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     (void)tableView;
-    return section == 0 ? @"外观样式" : @"大小与透明度";
+    if (section == 0) return @"外观样式";
+    if (section == 1) return @"大小与透明度";
+    return @"在哪些 App 显示";
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     (void)tableView;
-    if (section == 1) {
-        return @"仅保留拖动吸边与点击返回 LiveContainer 功能，不触碰音频会话与画中画。";
-    }
+    if (section == 1) return @"仅在已打开且启用本插件的 Guest App 中显示；LC 主界面不显示。";
+    if (section == 2) return @"默认对所有已安装 App 显示。取消选择后，该 App 内不显示悬浮按钮。";
     return nil;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     (void)tableView;
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
+
+    if (indexPath.section == 2) {
+        if (indexPath.row == self.guestApps.count) {
+            cell.textLabel.text = @"恢复默认设置";
+            cell.textLabel.textAlignment = NSTextAlignmentCenter;
+            cell.textLabel.textColor = UIColor.systemRedColor;
+            cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+            return cell;
+        }
+        NSDictionary *app = self.guestApps[indexPath.row];
+        cell.textLabel.text = app[@"title"] ?: app[@"path"];
+        cell.detailTextLabel.text = app[@"bundle"];
+        UISwitch *toggle = [UISwitch new];
+        toggle.accessibilityIdentifier = app[@"identity"];
+        toggle.on = [self.visibleGuestIdentities containsObject:app[@"identity"]];
+        [toggle addTarget:self action:@selector(appVisibilityChanged:) forControlEvents:UIControlEventValueChanged];
+        cell.accessoryView = toggle;
+        return cell;
+    }
 
     if (indexPath.section == 0) {
         UILabel *title = [UILabel new];
@@ -291,6 +370,13 @@ static CGFloat FMOrbYRatioPref(void) {
         [stack.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
     ]];
     return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.section == 2 && indexPath.row == self.guestApps.count) {
+        [self restoreDefaults];
+    }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 @end
@@ -374,10 +460,14 @@ static CGFloat FMOrbYRatioPref(void) {
 }
 
 - (BOOL)shouldShowOrb {
-    if ([LCOrbitHost isHostUI]) {
-        return [LCOrbitMultitask shouldShowFloatingMenu];
+    if ([LCOrbitHost isHostUI] || ![LCOrbitHost guestInfo]) return NO;
+    id configured = [FMPrefs() objectForKey:FMPrefKey(@"visibleGuestApps")];
+    if (![configured isKindOfClass:NSArray.class]) return YES;
+    NSSet *allowed = [NSSet setWithArray:configured];
+    for (NSDictionary *app in [LCOrbitGuestService installedApps]) {
+        if ([allowed containsObject:app[@"identity"]] && [LCOrbitGuestService isCurrentGuest:app]) return YES;
     }
-    return YES;
+    return NO;
 }
 
 - (void)refreshUI {
@@ -576,6 +666,7 @@ static CGFloat FMOrbYRatioPref(void) {
     vc.onChange = ^{
         [weakSelf applyOrbAppearance];
         [weakSelf layoutOrbAnimated:NO];
+        [weakSelf refreshUI];
     };
 
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];

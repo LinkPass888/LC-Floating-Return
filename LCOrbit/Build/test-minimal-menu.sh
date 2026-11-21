@@ -19,6 +19,11 @@ required=[
  '- (void)closeSettings',
  'LCFloatingMenuRegisterWithOrbit',
  'LCOrbitOverlayManager',
+ 'visibleGuestApps',
+ 'appVisibilityChanged:',
+ 'restoreDefaults',
+ 'isCurrentGuest:app',
+ 'hasPrefix:@"LCFloatingMenu."',
 ]
 missing=[x for x in required if x not in s]
 if missing: raise SystemExit('Missing FloatingMenu contract: '+', '.join(missing))
@@ -27,7 +32,10 @@ for removed in ['compatibilityPage:', 'refreshInventoryInBackground', 'switchFro
 show=s[s.index('- (BOOL)shouldShowOrb {'):]
 show=show[:show.index('\n}')+2]
 if 'settingsWindow' in show: raise SystemExit('The button must remain visible while Settings is open')
+if '[LCOrbitHost isHostUI] || ![LCOrbitHost guestInfo]' not in show:
+    raise SystemExit('The floating button must only be shown in an active Guest app')
 settings=s[s.index('- (void)openSettingsInScene:(UIWindowScene *)scene {'):]
+
 settings=settings[:settings.index('\n}')+2]
 if 'visible:NO' in settings: raise SystemExit('Opening Settings must not hide the floating overlay')
 print('FloatingMenu source contracts: PASS')
