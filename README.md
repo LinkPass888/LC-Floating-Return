@@ -1,4 +1,4 @@
-# LCFloatingReturn 0.1.0
+# LCFloatingReturn 0.1.1
 
 这是一个面向 LiveContainer / SideStore Guest 的精简悬浮返回按钮插件。
 

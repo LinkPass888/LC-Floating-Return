@@ -10,7 +10,7 @@
 #import <math.h>
 #import <stdlib.h>
 
-#define FM_MENU_VERSION @"0.1.0"
+#define FM_MENU_VERSION @"0.1.1"
 
 #import "../LCOrbit/Core/LCOrbitCore.h"
 #import "../LCOrbit/Core/LCOrbitHost.h"
@@ -113,6 +113,22 @@ static CGFloat FMOrbYRatioPref(void) {
         if (hit) return hit;
     }
     return nil;
+}
+@end
+
+@interface FMOrbButtonView : UIView
+@property (nonatomic, assign) BOOL dockedRight;
+@end
+
+@implementation FMOrbButtonView
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    (void)event;
+    // Fixed target for every visual style. Keep the extra width inside the edge.
+    const CGFloat hitWidth = 56.0;
+    const CGFloat hitHeight = 72.0;
+    CGFloat hitX = self.dockedRight ? CGRectGetMaxX(self.bounds) - hitWidth : CGRectGetMinX(self.bounds);
+    CGRect hit = CGRectMake(hitX, CGRectGetMidY(self.bounds) - hitHeight * 0.5, hitWidth, hitHeight);
+    return CGRectContainsPoint(hit, point);
 }
 @end
 
@@ -448,7 +464,7 @@ static CGFloat FMOrbYRatioPref(void) {
 - (void)ensureOrbView {
     if (self.orbView && self.orbView.superview == self.hostView) return;
 
-    UIView *orb = [UIView new];
+    FMOrbButtonView *orb = [FMOrbButtonView new];
     orb.clipsToBounds = YES;
     orb.userInteractionEnabled = YES;
 
@@ -552,6 +568,7 @@ static CGFloat FMOrbYRatioPref(void) {
     self.orbView.layer.borderColor = borderColor.CGColor;
 
     CGSize sz = [self orbSizeForStyle:style scale:scale];
+    ((FMOrbButtonView *)self.orbView).dockedRight = rightSide;
     if (style == FMOrbStyleCircle) {
         self.orbView.layer.cornerRadius = sz.width * 0.5;
         self.orbView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner |
