@@ -117,17 +117,18 @@ static CGFloat FMOrbYRatioPref(void) {
 @end
 
 @interface FMOrbButtonView : UIView
-@property (nonatomic, assign) BOOL dockedRight;
+@property (nonatomic, assign) BOOL docksLeft;
 @end
 
 @implementation FMOrbButtonView
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
     (void)event;
-    // Fixed target for every visual style. Keep the extra width inside the edge.
-    const CGFloat hitWidth = 56.0;
-    const CGFloat hitHeight = 72.0;
-    CGFloat hitX = self.dockedRight ? CGRectGetMaxX(self.bounds) - hitWidth : CGRectGetMinX(self.bounds);
-    CGRect hit = CGRectMake(hitX, CGRectGetMidY(self.bounds) - hitHeight * 0.5, hitWidth, hitHeight);
+    // Match the original edge-docked hit target: preserve at least 44pt
+    // inside the screen edge instead of wasting half of a symmetric target offscreen.
+    CGFloat width = MAX(44.0, CGRectGetWidth(self.bounds));
+    CGFloat height = MAX(44.0, CGRectGetHeight(self.bounds) + 20.0);
+    CGFloat x = self.docksLeft ? 0.0 : CGRectGetWidth(self.bounds) - width;
+    CGRect hit = CGRectMake(x, (CGRectGetHeight(self.bounds) - height) * 0.5, width, height);
     return CGRectContainsPoint(hit, point);
 }
 @end
@@ -568,7 +569,7 @@ static CGFloat FMOrbYRatioPref(void) {
     self.orbView.layer.borderColor = borderColor.CGColor;
 
     CGSize sz = [self orbSizeForStyle:style scale:scale];
-    ((FMOrbButtonView *)self.orbView).dockedRight = rightSide;
+    ((FMOrbButtonView *)self.orbView).docksLeft = !rightSide;
     if (style == FMOrbStyleCircle) {
         self.orbView.layer.cornerRadius = sz.width * 0.5;
         self.orbView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner |
